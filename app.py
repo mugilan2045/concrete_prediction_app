@@ -1,4 +1,3 @@
-
 # app.py
 import streamlit as st
 import pandas as pd
@@ -46,7 +45,12 @@ pipeline = Pipeline([('preprocess', preprocessor), ('model', model)])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 pipeline.fit(X_train, y_train)
-explainer = shap.Explainer(pipeline.named_steps['model'].predict, preprocessor.transform(X_test))
+
+@st.cache_resource
+def get_explainer():
+    return shap.Explainer(pipeline.named_steps['model'].predict, preprocessor.transform(X_test))
+
+explainer = get_explainer()
 X_test_df = pd.DataFrame(preprocessor.transform(X_test), columns=preprocessor.get_feature_names_out())
 
 # Streamlit App
@@ -97,7 +101,6 @@ if option == "Manual Prediction":
             base_feat = feat.split("__")[-1]
             st.write(f"{impact} **{base_feat}** impacted strength by **{abs(val):.2f} MPa**")
 
-        # Suggestions
         st.subheader("🛠 Suggestions")
         for feat, val in sorted(zip(shap_input.columns, shap_values[0].values), key=lambda x: abs(x[1]), reverse=True)[:5]:
             base_feat = feat.split("__")[-1]
@@ -108,8 +111,9 @@ if option == "Manual Prediction":
                 st.write(f"→ Consider to {direction} **{base_feat}** in range [{min_v}, {max_v}]")
 
         st.subheader("🌊 SHAP Waterfall Plot")
-        fig = shap.plots.waterfall(shap_values[0], show=False)
-        st.pyplot(bbox_inches='tight', dpi=300)
+        fig, ax = plt.subplots(figsize=(8, 6))
+        shap.plots._waterfall.waterfall_legacy(shap_values[0], show=False)
+        st.pyplot(fig)
 
 elif option == "AI Mix Optimizer":
     st.markdown("### 🎯 Enter Target Strength")
