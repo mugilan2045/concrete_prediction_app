@@ -22,7 +22,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 
 # Load dataset
-df = pd.read_csv('/content/concrete.csv')
+df = pd.read_csv('concrete.csv')
 df.drop_duplicates(inplace=True)
 df['w/c_ratio'] = df['water'] / df['cement']
 df.drop(['water', 'cement'], axis=1, inplace=True)
