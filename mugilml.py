@@ -220,4 +220,3 @@ if st.button("Predict Strength"):
     st.set_option('deprecation.showPyplotGlobalUse', False)
     shap.plots.waterfall(shap_values[0], show=False)
     st.pyplot(bbox_inches='tight')
-!streamlit run app.py
