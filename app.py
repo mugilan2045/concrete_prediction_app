@@ -86,30 +86,47 @@ if option == "Manual Prediction":
         else:
             st.markdown("❌ **Quality: Poor**")
 
-        # SHAP Plot
+        # SHAP replacement - simple explanation
         shap_input = pd.DataFrame(preprocessor.transform(df_input), columns=preprocessor.get_feature_names_out())
         shap_values = explainer(shap_input)
 
         st.subheader("📊 Feature Impact (Top 5)")
-        for feat, val in sorted(zip(shap_input.columns, shap_values[0].values), key=lambda x: abs(x[1]), reverse=True)[:5]:
-            impact = "↑" if val > 0 else "↓"
-            base_feat = feat.split("__")[-1]
-            st.write(f"{impact} **{base_feat}** impacted strength by **{abs(val):.2f} MPa**")
+        shap_df = pd.DataFrame({
+            'Feature': shap_input.columns.str.replace('num__|cat__', '', regex=True),
+            'SHAP Value': shap_values[0].values
+        })
+
+        # Show top features by absolute impact
+        for feat, val in shap_df.sort_values(by='SHAP Value', key=abs, ascending=False).head(5).values:
+            direction = "↑" if val > 0 else "↓"
+            st.write(f"{direction} **{feat}** impacted strength by **{abs(val):.2f} MPa**")
 
         # Suggestions
         st.subheader("🛠 Suggestions")
-        for feat, val in sorted(zip(shap_input.columns, shap_values[0].values), key=lambda x: abs(x[1]), reverse=True)[:5]:
-            base_feat = feat.split("__")[-1]
-            if base_feat in feature_stats.index:
+        for feat, val in shap_df.sort_values(by='SHAP Value', key=abs, ascending=False).head(5).values:
+            if feat in feature_stats.index:
                 direction = "increase" if val < 0 else "adjust"
-                min_v = feature_stats.loc[base_feat, 'min_suggest']
-                max_v = feature_stats.loc[base_feat, 'max_suggest']
-                st.write(f"→ Consider to {direction} **{base_feat}** in range [{min_v}, {max_v}]")
+                min_v = feature_stats.loc[feat, 'min_suggest']
+                max_v = feature_stats.loc[feat, 'max_suggest']
+                st.write(f"→ Consider to {direction} **{feat}** in range [{min_v}, {max_v}]")
 
-        st.subheader("🌊 SHAP Waterfall Plot")
-        fig, ax = plt.subplots(figsize=(8, 6))
-        shap.plots.waterfall(shap_values[0], max_display=10, show=False)
-        st.pyplot(fig)
+        # Visual bar charts instead of waterfall
+        st.subheader("📈 Visual Feature Impact")
+
+        top_positive = shap_df[shap_df['SHAP Value'] > 0].nlargest(5, 'SHAP Value')
+        top_negative = shap_df[shap_df['SHAP Value'] < 0].nsmallest(5, 'SHAP Value')
+
+        fig_pos, ax_pos = plt.subplots()
+        ax_pos.barh(top_positive['Feature'], top_positive['SHAP Value'], color='green')
+        ax_pos.set_title("🟢 Features Increasing Strength")
+        ax_pos.invert_yaxis()
+        st.pyplot(fig_pos)
+
+        fig_neg, ax_neg = plt.subplots()
+        ax_neg.barh(top_negative['Feature'], top_negative['SHAP Value'], color='red')
+        ax_neg.set_title("🔴 Features Decreasing Strength")
+        ax_neg.invert_yaxis()
+        st.pyplot(fig_neg)
 
 elif option == "AI Mix Optimizer":
     st.markdown("### 🎯 Enter Target Strength")
