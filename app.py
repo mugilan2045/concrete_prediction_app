@@ -51,7 +51,7 @@ X_test_df = pd.DataFrame(preprocessor.transform(X_test), columns=preprocessor.ge
 # Streamlit App
 st.set_page_config(layout="centered", page_title="🧱 Concrete Strength Predictor")
 
-st.title("🧠 Concrete Strength AI App")
+st.title("🧠 Concrete Strength Predictor")
 st.subheader("Choose an Option")
 
 option = st.selectbox("What do you want to do?", ["Manual Prediction", "AI Mix Optimizer"])
