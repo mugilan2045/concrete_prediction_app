@@ -292,3 +292,12 @@ def predict_manual_input():
 
 # Uncomment to run manual prediction interactively
 predict_manual_input()
+
+import pickle
+
+with open("best_strength_model.pkl", "wb") as f:
+    pickle.dump(final_pipeline_s, f)
+
+with open("best_cost_model.pkl", "wb") as f:
+    pickle.dump(final_pipeline_c, f)
+
